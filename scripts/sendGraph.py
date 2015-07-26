@@ -4,13 +4,13 @@
 # CONFIG
 
 # URL where data is sent
-#    www.fc00.org                              for clearnet access
-#    fc00.org                                  for hyperboria
-#    [fcc7:5feb:2c76:53d0:f954:9768:1008:fc00] for DNS-less access
-url = 'http://www.fc00.org/sendGraph'
+#    fc00.atomshare.net                        for clearnet access
+#    h.fc00.atomshare.net                      for hyperboria
+#    [fc53:dcc5:e89d:9082:4097:6622:5e82:c654] for DNS-less access
+url = 'http://fc00.atomshare.net/sendGraph'
 
 # Cjdns path without trailing slash
-cjdns_path = '/home/user/cjdns'
+cjdns_path = '/opt/cjdns'
 
 
 # ----------------------
@@ -40,7 +40,7 @@ import json
 sys.path.append(cjdns_path + '/contrib/python/cjdnsadmin/')
 import cjdnsadmin
 import adminTools
-
+from publicToIp6 import PublicToIp6_convert
 
 
 def main():
@@ -74,7 +74,7 @@ def generate_graph(cjdns):
 	print '  Found %d source nodes.' % len(source_nodes)
 
 	nodes, edges = cjdns_graph_from_nodes(cjdns, source_nodes)
-	print '  Found %d nodes and %d links.' % (len(nodes), len(edges))
+        print '  Found %d nodes and %d links.' % (len(nodes), len(edges))
 
 	return (nodes, edges)
 
@@ -89,7 +89,7 @@ def send_graph(nodes, edges):
 			'ip':      n.ip,
 			'version': n.version
 		})
-	
+
 	for e in edges:
 		graph_data['edges'].append({
 			'a': e.a.ip,
@@ -180,7 +180,7 @@ def cjdns_graph_from_nodes(cjdns, source_nodes):
 
 		if 'linkCount' in res:
 			for i in range(0, int(res['linkCount'])):
-				resp = cjdns.NodeStore_getLink(node.ip, i)
+                                resp = cjdns.NodeStore_getLink(parent=node.ip, linkNum=i)
 				if not 'result' in resp:
 					continue
 
@@ -189,7 +189,10 @@ def cjdns_graph_from_nodes(cjdns, source_nodes):
 					continue
 
 				# Add node
-				child_ip = res['child']
+				child_id = res['child']
+                                child_key = '.'.join(child_id.rsplit('.', 2)[1:])
+                                child_ip = PublicToIp6_convert(child_key)
+
 				if not child_ip in nodes:
 					n = Node(child_ip)
 					nodes[child_ip] = n
@@ -197,6 +200,7 @@ def cjdns_graph_from_nodes(cjdns, source_nodes):
 
 				# Add edge
 				e = Edge(nodes[node.ip], nodes[child_ip])
+                                print node.ip, child_ip
 				if not e in edges:
 					edges.append(e)
 
