@@ -7,7 +7,10 @@ app.config.from_pyfile('web_config.cfg')
 
 @app.context_processor
 def add_ip():
-	return dict(ip=request.environ['REMOTE_ADDR'])
+        ip = request.headers['x-real-ip']
+        if ip == '10.18.3.20':
+                ip = request.headers['x-atomshare-real-ip']
+	return dict(ip=ip)
 
 
 @app.route('/')
@@ -31,4 +34,4 @@ def page_sendGraph():
 		return 'Error: %s' % ret
 
 if __name__ == '__main__':
-	app.run(host='::')
+	app.run(host='localhost', port=3000)

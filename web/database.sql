@@ -1,5 +1,5 @@
-CREATE DATABASE  IF NOT EXISTS `fc00`;
-USE `fc00`;
+CREATE DATABASE  IF NOT EXISTS `cjdns`;
+USE `cjdns`;
 
 
 --

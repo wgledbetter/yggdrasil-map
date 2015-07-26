@@ -1,6 +1,7 @@
 import json
 from database import NodeDB
 from graph import Node, Edge
+import traceback
 
 def insert_graph_data(config, json_str):
 	try:
@@ -13,14 +14,14 @@ def insert_graph_data(config, json_str):
 
 	try:
 		for n in graph_data['nodes']:
-			try:
+                        try:
 				node = Node(n['ip'], version=n['version'])
 				nodes[n['ip']] = node
 			except Exception:
 				pass
 
 		for e in graph_data['edges']:
-			try:
+                        try:
 				edge = Edge(nodes[e['a']], nodes[e['b']])
 				edges.append(edge)
 			except Exception:
@@ -37,6 +38,7 @@ def insert_graph_data(config, json_str):
 		with NodeDB(config) as db:
 			db.insert_graph(nodes, edges)
 	except Exception:
+                traceback.print_exc()
 		return 'Database failure'
 
 	return None
