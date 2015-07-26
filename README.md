@@ -1,10 +1,11 @@
 # fc00.org
 
-Source code for http://fc00.org (http://www.fc00.org for clearnet)
+Source code for http://fc00.atomshare.net (http://h.fc00.atomshare.net for Hyperboria).
 
 ## Sending your view of the network
+
 ```bash
-wget https://raw.githubusercontent.com/Randati/fc00.org/master/scripts/sendGraph.py
+wget https://raw.githubusercontent.com/zielmicha/fc00.org/master/scripts/sendGraph.py
 nano sendGraph.py
 chmod +x sendGraph.py
 
@@ -14,7 +15,7 @@ chmod +x sendGraph.py
 
 ## Web server
 ```bash
-git clone git@github.com:Randati/fc00.org.git
+git clone git@github.com:zielmicha/fc00.org.git
 sudo apt-get install python-flask python-flup python-mysqldb
 
 cd fc00.org/web
