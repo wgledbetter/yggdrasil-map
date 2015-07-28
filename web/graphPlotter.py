@@ -1,7 +1,10 @@
 import pygraphviz as pgv
 import time
 import json
-
+import collections
+import math
+import networkx as nx
+from networkx.algorithms import centrality
 
 def position_nodes(nodes, edges):
     G = pgv.AGraph(strict=True, directed=False, size='10!')
@@ -16,6 +19,26 @@ def position_nodes(nodes, edges):
 
     return G
 
+def compute_betweenness(G):
+    ng = nx.Graph()
+    for start in G.iternodes():
+        others = G.neighbors(start)
+        for other in others:
+            ng.add_edge(start, other)
+
+    c = centrality.betweenness_centrality(ng)
+
+    for k, v in c.items():
+        c[k] = v
+
+    return c
+
+def canonalize_ip(ip):
+    return ':'.join( i.rjust(4, '0') for i in ip.split(':') )
+
+def load_db():
+    with open('nodedb/nodes') as f:
+        return dict([ (canonalize_ip(v[0]), v[1]) for v in [ l.split(None)[:2] for l in f.readlines() ] if len(v) > 1 ])
 
 def get_graph_json(G):
     max_neighbors = 1
@@ -31,18 +54,27 @@ def get_graph_json(G):
         'edges': []
     }
 
+    centralities = compute_betweenness(G)
+    db = load_db()
+
     for n in G.iternodes():
         neighbor_ratio = len(G.neighbors(n)) / float(max_neighbors)
         pos = n.attr['pos'].split(',', 1)
+        centrality = centralities.get(n.name, 0)
+        pcentrality = (centrality + 0.0001) * 500
+        size = (pcentrality ** 0.3 / 500) * 1000 + 1
+        name = db.get(n.name)
 
         out_data['nodes'].append({
             'id': n.name,
-            'label': n.attr['label'],
+            'label': name if name else n.attr['label'],
+            'name': name,
             'version': n.attr['version'],
             'x': float(pos[0]),
             'y': float(pos[1]),
             'color': _gradient_color(neighbor_ratio, [(100, 100, 100), (0, 0, 0)]),
-            'size': neighbor_ratio
+            'size': size,
+            'centrality': '%.4f' % centrality
         })
 
     for e in G.iteredges():

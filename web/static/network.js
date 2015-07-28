@@ -175,7 +175,8 @@ function showNodeInfo(node) {
 		'<span class="tt">' + node.id + '</span><br>' +
 		'<br>' +
 		'<strong>Version:</strong> ' + node.version + '<br>' +
-		'<strong>Peers:</strong> ' + node.peers.length + '<br>' +
+        '<strong>Peers:</strong> ' + node.peers.length + '<br>' +
+        '<strong>Centrality:</strong> ' + node.centrality + '<br>' +
 		'<table>' +
 		// '<tr><td></td><td><strong>Their peers #</strong></td></tr>' +
 		peers.map(function (n) {
@@ -210,7 +211,7 @@ $(document).ready(function() {
 			var node = nodes[i];
 			node.x = node.x * 1.2;
 			node.y = node.y * 1.2;
-			node.radius = 4 + node.size * 10;
+            node.radius = node.size;
 			node.hover = false;
 			node.selected = false;
 			node.edges = [];
@@ -399,7 +400,7 @@ $(document).ready(function() {
 			// node.x *= ratio;
 			// node.y *= ratio;
 			// node.radius *= ratio;
-			node.radius = (4 + node.size * 8) * zoom;
+            node.radius = (node.size) * zoom;
 		}
 
 		drawNetwork();
