@@ -3,9 +3,9 @@ from database import NodeDB
 from graph import Node, Edge
 import traceback
 
-def insert_graph_data(config, json_str):
+def insert_graph_data(config, data, mail, ip):
 	try:
-		graph_data = json.loads(json_str)
+                graph_data = json.loads(data)
 	except ValueError:
 		return 'Invalid JSON'
 
@@ -36,7 +36,7 @@ def insert_graph_data(config, json_str):
 
 	try:
 		with NodeDB(config) as db:
-			db.insert_graph(nodes, edges)
+                        db.insert_graph(nodes, edges)
 	except Exception:
                 traceback.print_exc()
 		return 'Database failure'

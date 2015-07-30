@@ -1,17 +1,17 @@
 #!/usr/bin/env python2
-
 ###############################################################################
 # CONFIG
 
 # URL where data is sent
-#    fc00.atomshare.net                        for clearnet access
-#    h.fc00.atomshare.net                      for hyperboria
+#    www.fc00.org                              for clearnet access
+#    h.fc00.org                                for hyperboria
 #    [fc53:dcc5:e89d:9082:4097:6622:5e82:c654] for DNS-less access
-url = 'http://fc00.atomshare.net/sendGraph'
+url = 'http://www.fc00.org/sendGraph'
+# update your email address, so I can contact you in case something goes wrong
+your_mail = 'bad_mail@example.com'
 
 # Cjdns path without trailing slash
 cjdns_path = '/opt/cjdns'
-
 
 # ----------------------
 # RPC connection details
@@ -29,9 +29,11 @@ cjdns_processes  = 1   # This can be used if you are running multiple instances
 
 ###############################################################################
 
-
-
 import sys
+
+if your_mail == 'bad_mail@example.com':
+    sys.exit('Please edit sendGraph.py to include your email address.')
+
 import urllib
 import urllib2
 from collections import deque
@@ -200,7 +202,6 @@ def cjdns_graph_from_nodes(cjdns, source_nodes):
 
 				# Add edge
 				e = Edge(nodes[node.ip], nodes[child_ip])
-                                print node.ip, child_ip
 				if not e in edges:
 					edges.append(e)
 
@@ -209,7 +210,7 @@ def cjdns_graph_from_nodes(cjdns, source_nodes):
 
 
 def send_data(graph_data):
-	post_data = urllib.urlencode({'data': graph_data})
+	post_data = urllib.urlencode({'data': graph_data, 'mail': your_mail})
 	req = urllib2.Request(url, post_data)
 	response = urllib2.urlopen(req)
 	return response.read()

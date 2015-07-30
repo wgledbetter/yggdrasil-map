@@ -4,13 +4,15 @@ from graphData import insert_graph_data
 app = Flask(__name__)
 app.config.from_pyfile('web_config.cfg')
 
-
-@app.context_processor
-def add_ip():
+def get_ip():
         ip = request.headers['x-real-ip']
         if ip == '10.18.3.20':
                 ip = request.headers['x-atomshare-real-ip']
-	return dict(ip=ip)
+        return ip
+
+@app.context_processor
+def add_ip():
+        return dict(ip=get_ip())
 
 
 @app.route('/')
@@ -26,8 +28,9 @@ def page_about():
 def page_sendGraph():
 	print "Receiving graph from %s" % (request.remote_addr)
 	
-	data = request.form['data']
-	ret = insert_graph_data(app.config, data)
+        data = request.form['data']
+        mail = request.form.get('mail', 'none')
+        ret = insert_graph_data(ip=get_ip(), config=app.config, data=data, mail=mail)
 	if ret == None:
 		return 'OK'
 	else:
