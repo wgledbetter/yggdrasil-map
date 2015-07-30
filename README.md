@@ -1,16 +1,21 @@
 # fc00.org
 
-Source code for http://fc00.atomshare.net (http://h.fc00.atomshare.net on Hyperboria).
+Source code for http://www.fc00.org (http://h.fc00.org on Hyperboria).
 
 ## Sending your view of the network
 
+In order to display accurate map of Hyperboria fc00 need your help. If you run CJDNS node, please send your network view using sendGraph.py script.
+
 ```bash
 wget https://raw.githubusercontent.com/zielmicha/fc00.org/master/scripts/sendGraph.py
+# edit configuration
 nano sendGraph.py
 chmod +x sendGraph.py
 
 # Run this every 5-60 minutes
 ./sendGraph.py
+# For example, add it to crontab
+(crontab -l; echo "@hourly /root/sendGraph.py") | crontab -
 ```
 
 ## Web server
