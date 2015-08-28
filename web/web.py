@@ -5,7 +5,10 @@ app = Flask(__name__)
 app.config.from_pyfile('web_config.cfg')
 
 def get_ip():
-        ip = request.headers['x-real-ip']
+        try:
+                ip = request.headers['x-real-ip']
+        except KeyError:
+                ip = None
         if ip == '10.18.3.20':
                 ip = request.headers['x-atomshare-real-ip']
         return ip
