@@ -2,26 +2,34 @@ import json
 from database import NodeDB
 from graph import Node, Edge
 import traceback
+import time
 
-def insert_graph_data(config, data, mail, ip):
+def insert_graph_data(config, data, mail, ip, version):
     try:
-                graph_data = json.loads(data)
+        graph_data = json.loads(data)
     except ValueError:
         return 'Invalid JSON'
+
+    log = '[%s] version: %d, mail: %r, nodes: %d, edges: %d' % (
+        time.strftime('%Y-%m-%d %H:%M:%S'),
+        version, mail, len(graph_data['nodes']), len(graph_data['edges']))
+
+    with open(config['LOG'], 'a') as f:
+        f.write(log + '\n')
 
     nodes = dict()
     edges = []
 
     try:
         for n in graph_data['nodes']:
-                        try:
+            try:
                 node = Node(n['ip'], version=n['version'])
                 nodes[n['ip']] = node
             except Exception:
                 pass
 
         for e in graph_data['edges']:
-                        try:
+            try:
                 edge = Edge(nodes[e['a']], nodes[e['b']])
                 edges.append(edge)
             except Exception:
@@ -40,7 +48,7 @@ def insert_graph_data(config, data, mail, ip):
         with NodeDB(config) as db:
                         db.insert_graph(nodes, edges, uploaded_by)
     except Exception:
-                traceback.print_exc()
+        traceback.print_exc()
         return 'Database failure'
 
     return None

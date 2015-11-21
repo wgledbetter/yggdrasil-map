@@ -19,8 +19,6 @@ class NodeDB:
         self.con.commit()
         self.con.close()
 
-
-
     def insert_node(self, node):
         now = int(time.time())
         self.cur.execute('''
@@ -31,7 +29,7 @@ class NodeDB:
             node.ip, node.label, node.version, now, now,
             node.label, node.version, now))
 
-        def insert_edge(self, edge, uploaded_by):
+    def insert_edge(self, edge, uploaded_by):
         now = int(time.time())
         self.cur.execute('''
                         INSERT INTO edges (a, b, first_seen, last_seen, uploaded_by)
@@ -41,7 +39,7 @@ class NodeDB:
                                 edge.a.ip, edge.b.ip, now, now, uploaded_by,
                                 now))
 
-        def insert_graph(self, nodes, edges, uploaded_by):
+    def insert_graph(self, nodes, edges, uploaded_by):
         for n in nodes.itervalues():
             self.insert_node(n)
 

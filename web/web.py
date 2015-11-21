@@ -31,9 +31,11 @@ def page_about():
 def page_sendGraph():
     print "Receiving graph from %s" % (request.remote_addr)
     
-        data = request.form['data']
-        mail = request.form.get('mail', 'none')
-        ret = insert_graph_data(ip=get_ip(), config=app.config, data=data, mail=mail)
+    data = request.form['data']
+    mail = request.form.get('mail', 'none')
+    version = int(request.form.get('version', '1'))
+    ret = insert_graph_data(ip=get_ip(), config=app.config, data=data, mail=mail, version=version)
+
     if ret == None:
         return 'OK'
     else:

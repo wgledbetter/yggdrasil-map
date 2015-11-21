@@ -1,8 +1,6 @@
 import pygraphviz as pgv
 import time
 import json
-import collections
-import math
 import networkx as nx
 from networkx.algorithms import centrality
 
