@@ -10,8 +10,8 @@ def insert_graph_data(config, data, mail, ip, version):
     except ValueError:
         return 'Invalid JSON'
 
-    log = '[%s] version: %d, mail: %r, nodes: %d, edges: %d' % (
-        time.strftime('%Y-%m-%d %H:%M:%S'),
+    log = '[%s] ip: %s, version: %d, mail: %r, nodes: %d, edges: %d' % (
+        time.strftime('%Y-%m-%d %H:%M:%S'), ip,
         version, mail, len(graph_data['nodes']), len(graph_data['edges']))
 
     with open(config['LOG'], 'a') as f:
