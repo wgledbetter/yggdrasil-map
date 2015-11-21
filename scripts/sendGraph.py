@@ -1,17 +1,15 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 ###############################################################################
 # CONFIG
 
 # URL where data is sent
-#    www.fc00.org                              for clearnet access
-#    h.fc00.org                                for hyperboria
+#    www.fc00.org                  for clearnet access
+#    h.fc00.org                for hyperboria
 #    [fc53:dcc5:e89d:9082:4097:6622:5e82:c654] for DNS-less access
-url = 'http://www.fc00.org/sendGraph'
-# update your email address, so I can contact you in case something goes wrong
-your_mail = 'bad_mail@example.com'
+url = 'http://h.fc00.org/sendGraph'
 
-# Cjdns path without trailing slash
-cjdns_path = '/opt/cjdns'
+# update your email address, so I can contact you in case something goes wrong
+your_email = 'your@email.here'
 
 # ----------------------
 # RPC connection details
@@ -21,201 +19,175 @@ cjdns_path = '/opt/cjdns'
 cjdns_use_default = True
 
 # otherwise these are used.
-cjdns_ip         = '127.0.0.1'
-cjdns_first_port = 11234
-cjdns_password   = 'hunter2'
-cjdns_processes  = 1   # This can be used if you are running multiple instances
-                       # of cjdns with consecutive port numbers
+cjdns_ip     = '127.0.0.1'
+cjdns_port       = 11234
+cjdns_password   = 'NONE'
 
 ###############################################################################
 
 import sys
-
-if your_mail == 'bad_mail@example.com':
-    sys.exit('Please edit sendGraph.py to include your email address.')
-
-import urllib
-import urllib2
-from collections import deque
 import traceback
 import json
-sys.path.append(cjdns_path + '/contrib/python/cjdnsadmin/')
-import cjdnsadmin
-import adminTools
-from publicToIp6 import PublicToIp6_convert
+
+import requests
+
+import cjdns
+from cjdns import key_utils
+from cjdns import admin_tools
 
 
 def main():
-	all_nodes = dict()
-	all_edges = []
+    con = connect()
 
-	for process in range(0, 1 if cjdns_use_default else cjdns_processes):
-		print 'Connecting port %d...' % (cjdns_first_port + process),; sys.stdout.flush()
+    nodes = dump_node_store(con)
+    edges = {}
 
-		try:
-			cjdns = cjdns_connect(process)
-			print adminTools.whoami(cjdns)['IP']
+    for k in nodes:
+        node = nodes[k]
+        node_ip = node['ip']
+        print(node)
 
-			nodes, edges = generate_graph(cjdns)
+        peers = get_peers(con, node['path'])
 
-			# Merge results
-			all_nodes.update(nodes)
-			for e in edges:
-				if not e in all_edges:
-					all_edges.append(e)
-		except Exception, err:
-			print 'Failed!'
-			print traceback.format_exc()
+        get_edges_for_peers(edges, peers, node_ip)
 
-	success = send_graph(all_nodes, all_edges)
-	sys.exit(0 if success else 1)
+    send_graph(nodes, edges)
+    sys.exit(0)
 
 
-def generate_graph(cjdns):
-	source_nodes = cjdns_get_node_store(cjdns)
-	print '  Found %d source nodes.' % len(source_nodes)
+def connect():
+    try:
+        if cjdns_use_default:
+            print('Connecting using default or ~/.cjdnsadmin credentials...')
+            con = cjdns.connectWithAdminInfo()
+        else:
+            print('Connecting to port %d...' % (cjdns_port))
+            con = cjdns.connect(cjdns_ip, cjdns_port, cjdns_password)
 
-	nodes, edges = cjdns_graph_from_nodes(cjdns, source_nodes)
-        print '  Found %d nodes and %d links.' % (len(nodes), len(edges))
+        print(admin_tools.whoami(con)['IP'])
+        return con
 
-	return (nodes, edges)
+    except:
+        print('Failed!')
+        print(traceback.format_exc())
+        sys.exit(1)
+
+
+def dump_node_store(con):
+    nodes = dict()
+
+    i = 0
+    while True:
+        res = con.NodeStore_dumpTable(i)
+
+        if not 'routingTable' in res:
+            break
+
+        for n in res['routingTable']:
+            if not all(key in n for key in ('addr', 'path', 'ip')):
+                continue
+
+            ip = n['ip']
+            path = n['path']
+            addr = n['addr']
+            version = None
+            if 'version' in n:
+                version = n['version']
+
+            nodes[ip] = {'ip': ip, 'path': path, 'addr': addr, 'version': version}
+
+        if not 'more' in res or res['more'] != 1:
+            break
+
+        i += 1
+
+    return nodes
+
+
+def get_peers(con, path):
+    peers = set()
+
+    i = 1
+    while i < 5:
+        res = con.RouterModule_getPeers(path)
+
+        if ('result' in res and res['result'] == 'timeout') or \
+           ('error'  in res and res['error']  != 'none'):
+            failure = ''
+            if 'error' in res:
+                failure = res['error']
+            if 'result' in res:
+                if len(failure) != 0:
+                    failure += '/'
+                failure += res['result']
+
+            print('get_peers: getPeers failed with {:s} on {:s}, trying again. {:d} tries remaining.'
+                  .format(failure, path, 4 - i))
+            i += 1
+            continue
+        else:
+            break
+
+    if 'result' not in res or res['result'] != 'peers':
+        print('get_peers: failed too many times, skipping.')
+        print(res)
+        return peers
+
+    for peer in res['peers']:
+        key = peer.split('.', 5)[-1]
+        peers |= {key}
+
+    return peers
+
+
+def get_edges_for_peers(edges, peers, node_ip):
+    for peer_key in peers:
+        peer_ip = key_utils.to_ipv6(peer_key)
+
+        if node_ip > peer_ip:
+            A = node_ip
+            B = peer_ip
+        else:
+            A = peer_ip
+            B = node_ip
+
+        edge = { 'A': A,
+                 'B': B }
+
+        if A not in edges:
+            edges[A] = []
+
+        if not([True for edge in edges[A] if edge['B'] == B]):
+            edges[A] += [edge]
+
 
 def send_graph(nodes, edges):
-	graph_data = {
-		'nodes': [],
-		'edges': []
-	}
+    graph = {
+        'nodes': [],
+        'edges': [edge for sublist in edges.values()
+                   for edge    in sublist],
+    }
 
-	for n in nodes.values():
-		graph_data['nodes'].append({
-			'ip':      n.ip,
-			'version': n.version
-		})
+    for node in nodes.values():
+        graph['nodes'].append({
+            'ip':      node['ip'],
+            'version': node['version'],
+        })
 
-	for e in edges:
-		graph_data['edges'].append({
-			'a': e.a.ip,
-			'b': e.b.ip
-		})
+    print('Nodes: {:d}\nEdges: {:d}\n'.format(len(nodes), len(edges)))
 
-	json_str = json.dumps(graph_data)
+    json_graph = json.dumps(graph)
+    print('Sending data to {:s}...'.format(url))
 
-	print 'Sending data...',; sys.stdout.flush()
-	answer = send_data(json_str)
-	success = answer == 'OK'
-	print ('Done!' if success else answer)
+    payload = {'data': json_graph, 'mail': your_email}
+    r = requests.post(url, data=payload)
 
-	return success
-
-
-class Node:
-	def __init__(self, ip, version=None):
-		self.ip = ip
-		self.version = version
-
-	def __lt__(self, b):
-		return self.ip < b.ip
-
-
-class Edge:
-	def __init__(self, a, b):
-		self.a, self.b = sorted([a, b])
-
-	def __eq__(self, that):
-		return self.a.ip == that.a.ip and self.b.ip == that.b.ip
-
-
-
-def cjdns_connect(process=0):
-	if cjdns_use_default:
-		return cjdnsadmin.connectWithAdminInfo()
-	else:
-		return cjdnsadmin.connect(cjdns_ip, cjdns_first_port + process, cjdns_password)
-
-def cjdns_get_node_store(cjdns):
-	nodes = dict()
-
-	i = 0
-	while True:
-		res = cjdns.NodeStore_dumpTable(i)
-
-		if not 'routingTable' in res:
-			break
-
-		for n in res['routingTable']:
-			if not 'ip' in n:
-				continue
-
-			ip = n['ip']
-			version = None
-
-			if 'version' in n:
-				version = n['version']
-
-			nodes[ip] = Node(ip, version)
-
-		if not 'more' in res or res['more'] != 1:
-			break
-
-		i += 1
-
-	return nodes
-
-def cjdns_graph_from_nodes(cjdns, source_nodes):
-	nodes_to_check = deque(source_nodes.values())
-
-	nodes = source_nodes.copy()
-	edges = []
-
-	while len(nodes_to_check) > 0:
-		node = nodes_to_check.pop()
-		nodes[node.ip] = node
-
-		resp = cjdns.NodeStore_nodeForAddr(node.ip)
-
-		if not 'result' in resp:
-			continue
-		res = resp['result']
-
-		if 'protocolVersion' in res:
-			node.version = res['protocolVersion']
-
-		if 'linkCount' in res:
-			for i in range(0, int(res['linkCount'])):
-                                resp = cjdns.NodeStore_getLink(parent=node.ip, linkNum=i)
-				if not 'result' in resp:
-					continue
-
-				res = resp['result']
-				if not 'child' in res or not 'isOneHop' in res or res['isOneHop'] != 1:
-					continue
-
-				# Add node
-				child_id = res['child']
-                                child_key = '.'.join(child_id.rsplit('.', 2)[1:])
-                                child_ip = PublicToIp6_convert(child_key)
-
-				if not child_ip in nodes:
-					n = Node(child_ip)
-					nodes[child_ip] = n
-					nodes_to_check.append(n)
-
-				# Add edge
-				e = Edge(nodes[node.ip], nodes[child_ip])
-				if not e in edges:
-					edges.append(e)
-
-	return (nodes, edges)
-
-
-
-def send_data(graph_data):
-	post_data = urllib.urlencode({'data': graph_data, 'mail': your_mail})
-	req = urllib2.Request(url, post_data)
-	response = urllib2.urlopen(req)
-	return response.read()
+    if r.status_code == requests.codes.ok:
+        print('Done!')
+    else:
+        print('Submission failed with error code {:d}'.format(r.status_code))
 
 
 
 if __name__ == '__main__':
-	main()
+    main()
