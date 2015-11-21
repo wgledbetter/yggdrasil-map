@@ -212,7 +212,7 @@ def send_graph(nodes, edges):
     if r.content == 'OK':
         print('Done!')
     else:
-        print('Error: {:s}'.format(r.content))
+        print('Error: {:s}'.format(r.text))
 
 if __name__ == '__main__':
     main()
