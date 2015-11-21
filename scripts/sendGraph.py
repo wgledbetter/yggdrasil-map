@@ -155,8 +155,11 @@ def get_peers(con, path):
             break
 
     if 'result' not in res or res['result'] != 'peers':
-        print('get_peers: failed too many times, skipping.')
-        print(res)
+        if 'result' in res and res['result'] == 'timeout':
+            print('get_peers: timed out on final try, skipping.')
+        else:
+            print('get_peers: failed too many times, skipping. Last response: {:s}'
+                  .format(str(res)))
         return peers
 
     for peer in res['peers']:
