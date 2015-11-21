@@ -12,6 +12,7 @@ CREATE TABLE `edges` (
   `b` varchar(39) NOT NULL,
   `first_seen` int(11) NOT NULL,
   `last_seen` int(11) NOT NULL,
+  `uploaded_by` varchar(200) NOT NULL,
   PRIMARY KEY (`a`,`b`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

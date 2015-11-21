@@ -55,7 +55,7 @@ function drawNetwork() {
 		var edge = edges[i];
 		var highlight = edge.sourceNode.hover || edge.targetNode.hover;
 		var color = highlight ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)';
-		
+
 		drawLine(ctx,
 			edge.sourceNode.x, edge.sourceNode.y,
 			edge.targetNode.x, edge.targetNode.y,
@@ -204,7 +204,7 @@ $(document).ready(function() {
 
 	jQuery.getJSON('/static/graph.json', function(data) {
 		nodes = data.nodes;
-		edges = data.edges;
+        edges = data.edges;
 
 		// Calculate node radiuses
 		for (var i = 0; i < nodes.length; ++i) {
@@ -222,6 +222,7 @@ $(document).ready(function() {
 			node.textColor = node.color;
 		}
 
+        var newEdges = []
 		// Find node references for edges
 		for (var i = 0; i < edges.length; ++i) {
 			var edge = edges[i];
@@ -235,13 +236,17 @@ $(document).ready(function() {
 					edge.targetNode = nodes[n];
 			}
 
+            if (!edge.sourceNode || !edge.targetNode)
+               continue;
+
 			edge.sourceNode.edges.push(edge);
 			edge.targetNode.edges.push(edge);
 			edge.sourceNode.peers.push(edge.targetNode);
 			edge.targetNode.peers.push(edge.sourceNode);
+
+            newEdges.push(edge);
 		}
-
-
+        edges = newEdges;
 
 		// Set update time
 		var delta = Math.round(new Date().getTime() / 1000) - data.created;
@@ -362,7 +367,7 @@ $(document).ready(function() {
 	$(canvas).mouseup(function(e) {
 		var mouse = mousePos(e);
 		var mouseMoved =
-			Math.abs(mouse.x - mouseDownPos.x) + 
+			Math.abs(mouse.x - mouseDownPos.x) +
 			Math.abs(mouse.y - mouseDownPos.y) > 3
 
 		if (!mouseMoved) {

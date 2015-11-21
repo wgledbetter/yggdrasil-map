@@ -31,22 +31,22 @@ class NodeDB:
 			node.ip, node.label, node.version, now, now,
 			node.label, node.version, now))
 
-	def insert_edge(self, edge):
+        def insert_edge(self, edge, uploaded_by):
 		now = int(time.time())
 		self.cur.execute('''
-			INSERT INTO edges (a, b, first_seen, last_seen)
-			VALUES (%s, %s, %s, %s)
+                        INSERT INTO edges (a, b, first_seen, last_seen, uploaded_by)
+                        VALUES (%s, %s, %s, %s, %s)
 			ON DUPLICATE KEY
 			UPDATE last_seen = %s''', (
-			edge.a.ip, edge.b.ip, now, now,
-			now))
+                                edge.a.ip, edge.b.ip, now, now, uploaded_by,
+                                now))
 
-	def insert_graph(self, nodes, edges):
+        def insert_graph(self, nodes, edges, uploaded_by):
 		for n in nodes.itervalues():
 			self.insert_node(n)
 
 		for e in edges:
-			self.insert_edge(e)
+                        self.insert_edge(e, uploaded_by)
 
 
 
