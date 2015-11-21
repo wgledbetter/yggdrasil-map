@@ -145,7 +145,7 @@ def get_peers(con, path):
                 failure += res['result']
 
             print('get_peers: getPeers failed with {:s} on {:s}, trying again. {:d} tries remaining.'
-                  .format(failure, path, 4 - i))
+                  .format(failure, path, 2 - i))
             i += 1
             continue
         else:
@@ -205,12 +205,10 @@ def send_graph(nodes, edges):
     payload = {'data': json_graph, 'mail': your_mail, 'version': 2}
     r = requests.post(url, data=payload)
 
-    if r.status_code == requests.codes.ok:
+    if r.content == 'OK':
         print('Done!')
     else:
-        print('Submission failed with error code {:d}'.format(r.status_code))
-
-
+        print('Error: %s' % r.content)
 
 if __name__ == '__main__':
     main()
