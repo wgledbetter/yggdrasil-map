@@ -21,23 +21,23 @@ def add_ip():
 @app.route('/')
 @app.route('/network')
 def page_network():
-	return render_template('network.html', page='network')
+    return render_template('network.html', page='network')
 
 @app.route('/about')
 def page_about():
-	return render_template('about.html', page='about')
+    return render_template('about.html', page='about')
 
 @app.route('/sendGraph', methods=['POST'])
 def page_sendGraph():
-	print "Receiving graph from %s" % (request.remote_addr)
-	
+    print "Receiving graph from %s" % (request.remote_addr)
+    
         data = request.form['data']
         mail = request.form.get('mail', 'none')
         ret = insert_graph_data(ip=get_ip(), config=app.config, data=data, mail=mail)
-	if ret == None:
-		return 'OK'
-	else:
-		return 'Error: %s' % ret
+    if ret == None:
+        return 'OK'
+    else:
+        return 'Error: %s' % ret
 
 if __name__ == '__main__':
-	app.run(host='localhost', port=3000)
+    app.run(host='localhost', port=3000)
