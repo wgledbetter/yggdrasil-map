@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Based on Kubuxu sendGraph script. Requires Python 3, requests and cjdns.
+# Based on Kyrias' sendGraph script. Requires Python 3, requests and cjdns.
 # You can install them using pip: pip3 install cjdns requests
 ###############################################################################
 # CONFIG
