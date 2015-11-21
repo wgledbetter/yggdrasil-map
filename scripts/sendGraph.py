@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+# Based on Kubuxu sendGraph script. Requires Python 3, requests and cjdns.
+# You can install them using pip: pip3 install cjdns requests
 ###############################################################################
 # CONFIG
 
 # URL where data is sent
-#    www.fc00.org                  for clearnet access
+#    www.fc00.org              for clearnet access
 #    h.fc00.org                for hyperboria
 #    [fc53:dcc5:e89d:9082:4097:6622:5e82:c654] for DNS-less access
 url = 'http://www.fc00.org/sendGraph'
