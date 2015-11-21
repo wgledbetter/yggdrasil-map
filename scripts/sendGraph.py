@@ -91,7 +91,6 @@ def connect():
             print('Connecting to port {:d}...'.format(cjdns_port))
             con = cjdns.connect(cjdns_ip, cjdns_port, cjdns_password)
 
-        print(admin_tools.whoami(con)['IP'])
         return con
 
     except:
