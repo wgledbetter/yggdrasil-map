@@ -94,7 +94,7 @@ def connect():
         return con
 
     except:
-        print('Failed!')
+        print('Connection failed!')
         print(traceback.format_exc())
         sys.exit(1)
 
