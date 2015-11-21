@@ -208,7 +208,7 @@ def send_graph(nodes, edges):
     payload = {'data': json_graph, 'mail': your_mail, 'version': 2}
     r = requests.post(url, data=payload)
 
-    if r.content == 'OK':
+    if r.text == 'OK':
         print('Done!')
     else:
         print('Error: {:s}'.format(r.text))
