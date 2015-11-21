@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Based on Kubuxu sendGraph script. Requires Python 3, requests and cjdns.
+# Based on Kyrias' sendGraph script. Requires Python 3, requests and cjdns.
 # You can install them using pip: pip3 install cjdns requests
 ###############################################################################
 # CONFIG
@@ -88,14 +88,13 @@ def connect():
             print('Connecting using default or ~/.cjdnsadmin credentials...')
             con = cjdns.connectWithAdminInfo()
         else:
-            print('Connecting to port %d...' % (cjdns_port))
+            print('Connecting to port {:d}...'.format(cjdns_port))
             con = cjdns.connect(cjdns_ip, cjdns_port, cjdns_password)
 
-        print(admin_tools.whoami(con)['IP'])
         return con
 
     except:
-        print('Failed!')
+        print('Connection failed!')
         print(traceback.format_exc())
         sys.exit(1)
 
@@ -212,7 +211,7 @@ def send_graph(nodes, edges):
     if r.content == 'OK':
         print('Done!')
     else:
-        print('Error: %s' % r.content)
+        print('Error: {:s}'.format(r.text))
 
 if __name__ == '__main__':
     main()
