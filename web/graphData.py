@@ -48,11 +48,11 @@ def insert_graph_data(config, data, mail, ip, version):
     if len(nodes) == 0 or len(edges) == 0:
         return 'No valid nodes or edges'
 
-        uploaded_by = ip
+    uploaded_by = ip
 
     try:
         with NodeDB(config) as db:
-                        db.insert_graph(nodes, edges, uploaded_by)
+            db.insert_graph(nodes, edges, uploaded_by)
     except Exception:
         traceback.print_exc()
         return 'Database failure'

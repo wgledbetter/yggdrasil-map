@@ -52,7 +52,9 @@ def main():
         get_peer_queue.put(k)
 
     for i in range(8):
-        threading.Thread(target=worker, args=[nodes, get_peer_queue, result_queue]).start()
+        t = threading.Thread(target=worker, args=[nodes, get_peer_queue, result_queue])
+        t.daemon = True
+        t.start()
 
     for i in range(len(nodes)):
         peers, node_ip = result_queue.get()
@@ -174,13 +176,13 @@ def get_edges_for_peers(edges, peers, node_ip):
             A = peer_ip
             B = node_ip
 
-        edge = { 'A': A,
-                 'B': B }
+        edge = { 'a': A,
+                 'b': B }
 
         if A not in edges:
             edges[A] = []
 
-        if not([True for edge in edges[A] if edge['B'] == B]):
+        if not([True for edge in edges[A] if edge['b'] == B]):
             edges[A] += [edge]
 
 
