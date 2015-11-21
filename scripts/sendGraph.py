@@ -88,7 +88,7 @@ def connect():
             print('Connecting using default or ~/.cjdnsadmin credentials...')
             con = cjdns.connectWithAdminInfo()
         else:
-            print('Connecting to port %d...' % (cjdns_port))
+            print('Connecting to port {:d}...'.format(cjdns_port))
             con = cjdns.connect(cjdns_ip, cjdns_port, cjdns_password)
 
         print(admin_tools.whoami(con)['IP'])
@@ -212,7 +212,7 @@ def send_graph(nodes, edges):
     if r.content == 'OK':
         print('Done!')
     else:
-        print('Error: %s' % r.content)
+        print('Error: {:s}'.format(r.content))
 
 if __name__ == '__main__':
     main()
