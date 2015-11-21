@@ -7,12 +7,15 @@ Source code for http://www.fc00.org (http://h.fc00.org on Hyperboria).
 In order to display accurate map of Hyperboria fc00 need your help. If you run CJDNS node, please send your network view using sendGraph.py script.
 
 ```bash
+# Install requests and cjdns for Python 3
+pip3 install cjdns requests
+# Get the script
 wget https://raw.githubusercontent.com/zielmicha/fc00.org/master/scripts/sendGraph.py
-# edit configuration
+# Edit configuration
 nano sendGraph.py
 chmod +x sendGraph.py
 
-# Run this every 5-60 minutes
+# Run this every 20-100 minutes
 ./sendGraph.py
 # For example, add it to crontab
 (crontab -l; echo "@hourly /root/sendGraph.py") | crontab -

@@ -17,6 +17,12 @@ def insert_graph_data(config, data, mail, ip, version):
     with open(config['LOG'], 'a') as f:
         f.write(log + '\n')
 
+    if mail == 'your@email.here':
+        return 'Please change email address in config.'
+
+    if version != 2:
+        return 'You are using outdated version of sendGraph script. Get new version from https://github.com/zielmicha/fc00.org/blob/master/scripts/sendGraph.py'
+
     nodes = dict()
     edges = []
 

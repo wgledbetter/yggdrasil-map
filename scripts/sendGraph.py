@@ -6,10 +6,11 @@
 #    www.fc00.org                  for clearnet access
 #    h.fc00.org                for hyperboria
 #    [fc53:dcc5:e89d:9082:4097:6622:5e82:c654] for DNS-less access
-url = 'http://h.fc00.org/sendGraph'
+url = 'http://www.fc00.org/sendGraph'
 
 # update your email address, so I can contact you in case something goes wrong
-your_email = 'your@email.here'
+your_mail = 'your@email.here'
+
 
 # ----------------------
 # RPC connection details
@@ -35,6 +36,8 @@ import cjdns
 from cjdns import key_utils
 from cjdns import admin_tools
 
+import queue
+import threading
 
 def main():
     con = connect()
@@ -42,18 +45,38 @@ def main():
     nodes = dump_node_store(con)
     edges = {}
 
+    get_peer_queue = queue.Queue(0)
+    result_queue = queue.Queue(0)
+
     for k in nodes:
-        node = nodes[k]
-        node_ip = node['ip']
-        print(node)
+        get_peer_queue.put(k)
 
-        peers = get_peers(con, node['path'])
+    for i in range(8):
+        threading.Thread(target=worker, args=[nodes, get_peer_queue, result_queue]).start()
 
+    for i in range(len(nodes)):
+        peers, node_ip = result_queue.get()
         get_edges_for_peers(edges, peers, node_ip)
 
     send_graph(nodes, edges)
     sys.exit(0)
 
+def worker(nodes, get_peer_queue, result):
+    con = connect()
+
+    while True:
+        try:
+            k = get_peer_queue.get_nowait()
+        except queue.Empty:
+            return
+
+        node = nodes[k]
+        print('fetch', node)
+        node_ip = node['ip']
+
+        peers = get_peers(con, node['path'])
+
+        result.put((peers, node_ip))
 
 def connect():
     try:
@@ -108,7 +131,7 @@ def get_peers(con, path):
     peers = set()
 
     i = 1
-    while i < 5:
+    while i < 3:
         res = con.RouterModule_getPeers(path)
 
         if ('result' in res and res['result'] == 'timeout') or \
@@ -179,7 +202,7 @@ def send_graph(nodes, edges):
     json_graph = json.dumps(graph)
     print('Sending data to {:s}...'.format(url))
 
-    payload = {'data': json_graph, 'mail': your_email}
+    payload = {'data': json_graph, 'mail': your_mail, 'version': 2}
     r = requests.post(url, data=payload)
 
     if r.status_code == requests.codes.ok:
