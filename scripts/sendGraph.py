@@ -31,6 +31,7 @@ cjdns_password   = 'NONE'
 import sys
 import traceback
 import json
+import argparse
 
 import requests
 
@@ -42,6 +43,12 @@ import queue
 import threading
 
 def main():
+    parser = argparse.ArgumentParser(description='Submit nodes and links to fc00')
+    parser.add_argument('-v', '--verbose', help='increase output verbosity',
+                        dest='verbose', action='store_true')
+    parser.set_defaults(verbose=False)
+    args = parser.parse_args()
+
     con = connect()
 
     nodes = dump_node_store(con)
@@ -54,7 +61,8 @@ def main():
         get_peer_queue.put(k)
 
     for i in range(8):
-        t = threading.Thread(target=worker, args=[nodes, get_peer_queue, result_queue])
+        t = threading.Thread(target=worker, args=[nodes, get_peer_queue, result_queue,
+                                                  args.verbose])
         t.daemon = True
         t.start()
 
@@ -65,7 +73,7 @@ def main():
     send_graph(nodes, edges)
     sys.exit(0)
 
-def worker(nodes, get_peer_queue, result):
+def worker(nodes, get_peer_queue, result, verbose=False):
     con = connect()
 
     while True:
@@ -75,7 +83,8 @@ def worker(nodes, get_peer_queue, result):
             return
 
         node = nodes[k]
-        print('fetch', node)
+        if verbose:
+            print('fetch', node)
         node_ip = node['ip']
 
         peers = get_peers(con, node['path'])
