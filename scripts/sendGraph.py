@@ -153,7 +153,12 @@ def get_peers(con, path, nearbyPath=''):
             res = con.RouterModule_getPeers(path)
 
 
-        if res['error'] != 'none':
+        if res['error'] == 'not_found':
+            print('get_peers: node with path {:s} not found, skipping.'
+                  .format(formatted_path))
+            return []
+
+        elif res['error'] != 'none':
             print('get_peers: failed with error `{:s}` on {:s}, trying again. {:d} tries remaining.'
                   .format(res['error'], formatted_path, retry-i))
         elif res['result'] == 'timeout':
