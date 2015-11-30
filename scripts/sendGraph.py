@@ -145,7 +145,8 @@ def get_peers(con, path, nearbyPath=''):
         formatted_path = '{:s} (nearby {:s})'.format(path, nearbyPath)
 
     i = 1
-    while i < 4:
+    retry = 2
+    while i < retry + 1:
         if nearbyPath:
             res = con.RouterModule_getPeers(path, nearbyPath=nearbyPath)
         else:
@@ -154,10 +155,10 @@ def get_peers(con, path, nearbyPath=''):
 
         if res['error'] != 'none':
             print('get_peers: failed with error `{:s}` on {:s}, trying again. {:d} tries remaining.'
-                  .format(res['error'], formatted_path, 3-i))
+                  .format(res['error'], formatted_path, retry-i))
         elif res['result'] == 'timeout':
             print('get_peers: timed out on {:s}, trying again. {:d} tries remaining.'
-                  .format(formatted_path, 3-i))
+                  .format(formatted_path, retry-i))
         else:
             return res['peers']
 
@@ -179,13 +180,22 @@ def get_all_peers(con, path):
         return keys
 
     last_peer = res[-1]
+    checked_paths = set()
+
     while len(res) > 1:
         last_path = (last_peer.split('.', 1)[1]
                               .rsplit('.', 2)[0])
 
+        if last_path in checked_paths:
+            break
+        else:
+            checked_paths.add(last_path)
+
         res = get_peers(con, path, last_path)
         if res:
             last_peer = res[-1]
+        else:
+            break
 
         peers.update(res)
 
