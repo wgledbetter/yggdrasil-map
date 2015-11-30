@@ -169,7 +169,7 @@ def get_peers(con, path, nearbyPath=''):
 
         i += 1
 
-    print('get_peers: timed out on final try, skipping {:s}'
+    print('get_peers: failed on final try, skipping {:s}'
           .format(formatted_path))
     return []
 
@@ -256,7 +256,7 @@ def send_graph(nodes, edges):
     if r.text == 'OK':
         print('Done!')
     else:
-        print('Error: {:s}'.format(r.text))
+        print('{:s}'.format(r.text))
 
 if __name__ == '__main__':
     main()
