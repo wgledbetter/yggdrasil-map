@@ -87,7 +87,7 @@ def worker(nodes, get_peer_queue, result, verbose=False):
             print('fetch', node)
         node_ip = node['ip']
 
-        peers = get_peers(con, node['path'])
+        peers = get_all_peers(con, node['path'])
 
         result.put((peers, node_ip))
 
@@ -139,43 +139,61 @@ def dump_node_store(con):
     return nodes
 
 
-def get_peers(con, path):
-    peers = set()
+def get_peers(con, path, nearbyPath=''):
+    formatted_path = path
+    if nearbyPath:
+        formatted_path = '{:s} (nearby {:s})'.format(path, nearbyPath)
 
     i = 1
-    while i < 3:
-        res = con.RouterModule_getPeers(path)
-
-        if ('result' in res and res['result'] == 'timeout') or \
-           ('error'  in res and res['error']  != 'none'):
-            failure = ''
-            if 'error' in res:
-                failure = res['error']
-            if 'result' in res:
-                if len(failure) != 0:
-                    failure += '/'
-                failure += res['result']
-
-            print('get_peers: getPeers failed with {:s} on {:s}, trying again. {:d} tries remaining.'
-                  .format(failure, path, 2 - i))
-            i += 1
-            continue
+    while i < 4:
+        if nearbyPath:
+            res = con.RouterModule_getPeers(path, nearbyPath=nearbyPath)
         else:
-            break
+            res = con.RouterModule_getPeers(path)
 
-    if 'result' not in res or res['result'] != 'peers':
-        if 'result' in res and res['result'] == 'timeout':
-            print('get_peers: timed out on final try, skipping.')
+
+        if res['error'] != 'none':
+            print('get_peers: failed with error `{:s}` on {:s}, trying again. {:d} tries remaining.'
+                  .format(res['error'], formatted_path, 3-i))
+        elif res['result'] == 'timeout':
+            print('get_peers: timed out on {:s}, trying again. {:d} tries remaining.'
+                  .format(formatted_path, 3-i))
         else:
-            print('get_peers: failed too many times, skipping. Last response: {:s}'
-                  .format(str(res)))
-        return peers
+            return res['peers']
 
-    for peer in res['peers']:
+        i += 1
+
+    print('get_peers: timed out on final try, skipping {:s}'
+          .format(formatted_path))
+    return []
+
+
+def get_all_peers(con, path):
+    peers = set()
+    keys = set()
+
+    res = get_peers(con, path)
+    peers.update(res)
+
+    if not res:
+        return keys
+
+    last_peer = res[-1]
+    while len(res) > 1:
+        last_path = (last_peer.split('.', 1)[1]
+                              .rsplit('.', 2)[0])
+
+        res = get_peers(con, path, last_path)
+        if res:
+            last_peer = res[-1]
+
+        peers.update(res)
+
+    for peer in peers:
         key = peer.split('.', 5)[-1]
-        peers |= {key}
+        keys |= {key}
 
-    return peers
+    return keys
 
 
 def get_edges_for_peers(edges, peers, node_ip):
