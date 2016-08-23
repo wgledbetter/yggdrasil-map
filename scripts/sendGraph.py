@@ -215,12 +215,8 @@ def get_edges_for_peers(edges, peers, node_ip):
     for peer_key in peers:
         peer_ip = key_utils.to_ipv6(peer_key)
 
-        if node_ip > peer_ip:
-            A = node_ip
-            B = peer_ip
-        else:
-            A = peer_ip
-            B = node_ip
+        A = max(node_ip, peer_ip)
+        B = min(node_ip, peer_ip)
 
         edge = { 'a': A,
                  'b': B }
@@ -228,8 +224,8 @@ def get_edges_for_peers(edges, peers, node_ip):
         if A not in edges:
             edges[A] = []
 
-        if not([True for edge in edges[A] if edge['b'] == B]):
-            edges[A] += [edge]
+        if not any(edge['b'] == B for edge in edges[A]):
+            edges[A].append(edge)
 
 
 def send_graph(nodes, edges):
