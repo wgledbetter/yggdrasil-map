@@ -8,10 +8,10 @@ def position_nodes(nodes, edges):
     G = pgv.AGraph(strict=True, directed=False, size='10!')
 
     for n in nodes.values():
-        G.add_node(n.ip, label=n.label, version=n.version)
+        G.add_node(n.coords, label=n.ip, version=n.version)
 
     for e in edges:
-        G.add_edge(e.a.ip, e.b.ip, len=1.0)
+        G.add_edge(e.a.coords, e.b.coords, len=1.0)
 
     G.layout(prog='neato', args='-Gepsilon=0.0001 -Gmaxiter=100000')
 
@@ -53,7 +53,7 @@ def get_graph_json(G):
     }
 
     centralities = compute_betweenness(G)
-    db = load_db()
+    #db = load_db()
 
     for n in G.iternodes():
         neighbor_ratio = len(G.neighbors(n)) / float(max_neighbors)
@@ -61,7 +61,7 @@ def get_graph_json(G):
         centrality = centralities.get(n.name, 0)
         pcentrality = (centrality + 0.0001) * 500
         size = (pcentrality ** 0.3 / 500) * 1000 + 1
-        name = db.get(n.name)
+        name = None#db.get(n.name)
 
         out_data['nodes'].append({
             'id': n.name,
