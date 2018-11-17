@@ -59,8 +59,7 @@ def get_graph_json(G):
         neighbor_ratio = len(G.neighbors(n)) / float(max_neighbors)
         pos = n.attr['pos'].split(',', 1)
         centrality = centralities.get(n.name, 0)
-        pcentrality = (centrality + 0.0001) * 500
-        size = (pcentrality ** 0.3 / 500) * 1000 + 1
+        size = 5*(1 + 1*centrality)
         name = None#db.get(n.name)
 
         out_data['nodes'].append({
