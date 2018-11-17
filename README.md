@@ -1,34 +1,21 @@
-# fc00.org
+# Yggdrasil map
 
-Source code for http://www.fc00.org (http://h.fc00.org on Hyperboria).
+Forked from the code for http://www.fc00.org (http://h.fc00.org on Hyperboria).
 
 ## Sending your view of the network
 
-In order to display accurate map of Hyperboria fc00 need your help. If you run CJDNS node, please send your network view using sendGraph.py script.
-
-```bash
-# Install requests and cjdns for Python 3
-pip3 install cjdns requests
-# Get the script
-wget https://raw.githubusercontent.com/zielmicha/fc00.org/master/scripts/sendGraph.py
-# Edit configuration
-nano sendGraph.py
-chmod +x sendGraph.py
-
-# Run this every 20-100 minutes
-./sendGraph.py
-# For example, add it to crontab
-(crontab -l; echo "@hourly /root/sendGraph.py") | crontab -
-```
+This code reads a map of known nodes from `y.yakamo.org:3000/current` (reachable over yggdrasil). In order to display an accurate map of the network, we need your help. If you run a yggdrasil node, plase send your network view using the [send-view.py](https://github.com/yakamok/Niflheim-api/blob/master/send-view.py) script.
 
 ## Web server
 ```bash
-git clone git@github.com:zielmicha/fc00.org.git
-git clone git@github.com:zielmicha/nodedb.git web/nodedb
-sudo apt-get install python-flask python-flup python-mysqldb python-pygraphviz
+git clone https://github.com/Arceliar/yggdrasil-map.git
+sudo apt-get install python-flask python-flup python-mysqldb python-pygraphviz python-networkx
 
-cd fc00.org/web
+cd yggdrasil-map/web
+cp web_config.example.cfg web_config.cfg
 python web.py
 ```
+
+You would need to edit web.py to adjust the address/port the server listens on, and may want to edit the web_config.cfg file. Note that most of the options in web_config.cfg are unused after forking from the fc00.org code, so this is mostly just a workaround until we have time to clean up this code.
 
 Run `web/updateGraph.py` periodically to rerender nodes graph. You may want to customize reverse-proxy IP retrieval logic in web.py.
