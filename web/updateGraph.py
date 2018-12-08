@@ -4,7 +4,7 @@ from database import NodeDB
 import graphPlotter
 
 import urllib, json
-url = "http://y.yakamo.org:3000/current"
+url = "current" #alternatively "http://y.yakamo.org:3000/current"
 
 # nodes indexed by coords
 class NodeInfo:
