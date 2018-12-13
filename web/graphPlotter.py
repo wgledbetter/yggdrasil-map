@@ -8,10 +8,10 @@ def position_nodes(nodes, edges):
     G = pgv.AGraph(strict=True, directed=False, size='10!')
 
     for n in nodes.values():
-        G.add_node(n.coords, label=n.ip, version=n.version)
+        G.add_node(n.ip, label=n.label, coords=n.coords)
 
     for e in edges:
-        G.add_edge(e.a.coords, e.b.coords, len=1.0)
+        G.add_edge(e.a.ip, e.b.ip, len=1.0)
 
     G.layout(prog='neato', args='-Gepsilon=0.0001 -Gmaxiter=100000')
 
@@ -66,7 +66,7 @@ def get_graph_json(G):
             'id': n.name,
             'label': name if name else n.attr['label'],
             'name': name,
-            'version': n.attr['version'],
+            'coords': n.attr['coords'],
             'x': float(pos[0]),
             'y': float(pos[1]),
             'color': _gradient_color(neighbor_ratio, [(100, 100, 100), (0, 0, 0)]),
