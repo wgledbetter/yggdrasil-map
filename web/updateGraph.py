@@ -4,13 +4,13 @@ from database import NodeDB
 import graphPlotter
 
 import urllib, json
-url = "current" #alternatively "http://y.yakamo.org:3000/current"
+url = "http://y.yakamo.org:3000/current"
 
 # nodes indexed by coords
 class NodeInfo:
   def __init__(self, ip, coords):
     self.ip = str(ip)
-    self.label = str(ip) # TODO readable labels
+    self.label = str(ip).split(":")[-1]
     self.coords = str(coords)
     self.version = "unknown"
   def getCoordList(self):
