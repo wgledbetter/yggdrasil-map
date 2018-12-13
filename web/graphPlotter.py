@@ -3,6 +3,7 @@ import time
 import json
 import networkx as nx
 from networkx.algorithms import centrality
+import urllib
 
 def position_nodes(nodes, edges):
     G = pgv.AGraph(strict=True, directed=False, size='10!')
@@ -35,8 +36,11 @@ def canonalize_ip(ip):
     return ':'.join( i.rjust(4, '0') for i in ip.split(':') )
 
 def load_db():
-    with open('nodedb/nodes') as f:
-        return dict([ (canonalize_ip(v[0]), v[1]) for v in [ l.split(None)[:2] for l in f.readlines() ] if len(v) > 1 ])
+    #with open('nodedb/nodes') as f:
+    #    return dict([ (canonalize_ip(v[0]), v[1]) for v in [ l.split(None)[:2] for l in f.readlines() ] if len(v) > 1 ])
+    url = "https://raw.githubusercontent.com/yakamok/yggdrasil-nodelist/master/nodelist"
+    f = urllib.urlopen(url)
+    return dict([ (canonalize_ip(v[0]), v[1]) for v in [ l.split(None)[:2] for l in f.readlines() ] if len(v) > 1 ])
 
 def get_graph_json(G):
     max_neighbors = 1
@@ -53,14 +57,14 @@ def get_graph_json(G):
     }
 
     centralities = compute_betweenness(G)
-    #db = load_db()
+    db = load_db()
 
     for n in G.iternodes():
         neighbor_ratio = len(G.neighbors(n)) / float(max_neighbors)
         pos = n.attr['pos'].split(',', 1)
         centrality = centralities.get(n.name, 0)
         size = 5*(1 + 1*centrality)
-        name = None#db.get(n.name)
+        name = db.get(canonalize_ip(n.name))
 
         out_data['nodes'].append({
             'id': n.name,
