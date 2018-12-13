@@ -4,7 +4,7 @@ Forked from the code for http://www.fc00.org (http://h.fc00.org on Hyperboria).
 
 ## Sending your view of the network
 
-This code reads a map of known nodes from `y.yakamo.org:3000/current` (reachable over yggdrasil). In order to display an accurate map of the network, we need your help. If you run a yggdrasil node, plase send your network view using the [send-view.py](https://github.com/yakamok/Niflheim-api/blob/master/send-view.py) script.
+This code reads a map of known nodes from `y.yakamo.org:3000/current` (reachable over yggdrasil). You may alternatively generate your own view of the network by running [a crawler script](scripts/crawl-dht.py), but this may take some time (figuring out how to run it and use the results is left as an exercise to the user).
 
 ## Web server
 ```bash

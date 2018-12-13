@@ -174,7 +174,7 @@ function showNodeInfo(node) {
         '<h2>' + node.label + '</h2>' +
         '<span class="tt">' + node.id + '</span><br>' +
         '<br>' +
-        '<strong>Version:</strong> ' + node.version + '<br>' +
+        '<strong>Coords:</strong> ' + node.coords + '<br>' +
         '<strong>Peers:</strong> ' + node.peers.length + '<br>' +
         '<strong>Centrality:</strong> ' + node.centrality + '<br>' +
         '<table>' +
