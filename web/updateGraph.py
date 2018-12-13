@@ -39,8 +39,9 @@ def generate_graph(time_limit=60*60*3):
 
     nodes = dict()
     def addAncestors(info):
-      parent = NodeInfo("?", info.getParent())
-      parent.label = "{} {}".format(parent.ip, parent.coords)
+      coords = info.getParent()
+      parent = NodeInfo("{} {}".format("?", coords), coords)
+      parent.label = "?"
       nodes[parent.coords] = parent
       if parent.coords != parent.getParent(): addAncestors(parent)
 
