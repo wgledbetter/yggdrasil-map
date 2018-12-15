@@ -41,5 +41,10 @@ def page_sendGraph():
     else:
         return 'Error: %s' % ret
 
+@app.after_request
+def add_header(response):
+    response.cache_control.max_age = 300
+    return response
+
 if __name__ == '__main__':
     app.run(host='localhost', port=3000)
