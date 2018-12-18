@@ -42,7 +42,7 @@ def generate_graph(time_limit=60*60*3):
     def addAncestors(info):
       coords = info.getParent()
       parent = NodeInfo("{} {}".format("?", coords), coords)
-      parent.label = "?"
+      parent.label = parent.ip
       nodes[parent.coords] = parent
       if parent.coords != parent.getParent(): addAncestors(parent)
 
