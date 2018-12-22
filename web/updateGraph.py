@@ -35,13 +35,14 @@ def generate_graph(time_limit=60*60*3):
     toAdd = []
     for ip in data:
       info = NodeInfo(ip, data[ip][0])
+      if len(data[ip]) >= 3: info.label = data[ip][2]
       toAdd.append(info)
 
     nodes = dict()
     def addAncestors(info):
       coords = info.getParent()
       parent = NodeInfo("{} {}".format("?", coords), coords)
-      parent.label = "?"
+      parent.label = parent.ip
       nodes[parent.coords] = parent
       if parent.coords != parent.getParent(): addAncestors(parent)
 

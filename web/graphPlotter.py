@@ -65,6 +65,8 @@ def get_graph_json(G):
         centrality = centralities.get(n.name, 0)
         size = 5*(1 + 1*centrality)
         name = db.get(canonalize_ip(n.name))
+        # If label isn't the default value, set name to that instead
+        if n.attr['label'] != n.name.split(':')[-1]: name = n.attr['label']
 
         out_data['nodes'].append({
             'id': n.name,
