@@ -13,6 +13,7 @@ RUN git clone https://github.com/Arceliar/yggdrasil-map.git && \
     cp web_config.example.cfg web_config.cfg
 
 COPY entrypoint.sh /usr/bin/entrypoint.sh
+RUN chmod 0555 /usr/bin/entrypoint.sh
 
 COPY crontab /etc/cron.d/jobs
 RUN chmod 0644 /etc/cron.d/jobs
