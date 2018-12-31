@@ -7,7 +7,7 @@ RUN apt-get update && \
     apt-get install -y git python-flask python-flup python-mysqldb python-pygraphviz python-networkx cron && \
     apt-get clean
 
-RUN git clone https://github.com/Arceliar/yggdrasil-map.git
+RUN git clone https://github.com/Arceliar/yggdrasil-map.git yggdrasil-map
 
 RUN cd yggdrasil-map/web && \
     cp web_config.example.cfg web_config.cfg
