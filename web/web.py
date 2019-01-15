@@ -1,6 +1,11 @@
 from flask import Flask, render_template, request
 from graphData import insert_graph_data
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--host", type=str, help="host to listen on (default 'localhost')", default="localhost")
+parser.add_argument("--port", type=int, help="port to listen on (default '3000')", default=3000)
+
 app = Flask(__name__)
 app.config.from_pyfile('web_config.cfg')
 
@@ -47,4 +52,5 @@ def add_header(response):
     return response
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=3000)
+    args = parser.parse_args()
+    app.run(host=args.host, port=args.port)
