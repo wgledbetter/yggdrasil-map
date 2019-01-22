@@ -1,6 +1,9 @@
 FROM debian:stretch
 LABEL maintainer="Christer Waren/CWINFO <christer.waren@cwinfo.org>"
 
+ENV HOST localhost
+ENV PORT 3000
+
 WORKDIR /src
 
 RUN apt-get update && \
