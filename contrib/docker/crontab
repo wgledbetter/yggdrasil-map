@@ -1,0 +1,1 @@
+*/10 * * * * root cd /src/yggdrasil-map/web/ && python updateGraph.py
