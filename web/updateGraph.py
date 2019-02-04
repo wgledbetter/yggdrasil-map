@@ -2,6 +2,7 @@
 from flask import Config
 from database import NodeDB
 import graphPlotter
+import cgi
 
 import urllib, json
 url = "http://y.yakamo.org:3000/current"
@@ -36,6 +37,7 @@ def generate_graph(time_limit=60*60*3):
     for ip in data:
       info = NodeInfo(ip, data[ip][0])
       if len(data[ip]) >= 3: info.label = data[ip][2]
+      info.label = cgi.escape(info.label)
       toAdd.append(info)
 
     nodes = dict()
