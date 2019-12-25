@@ -26,6 +26,17 @@ def doRequest(req):
   except:
     return None
 
+def getNodeInfo(key, coords):
+  try:
+    req = '{{"keepalive":true, "request":"getNodeInfo", "box_pub_key":"{}", "coords":"{}"}}'.format(key, coords)
+    ygg = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ygg.connect(host_port)
+    ygg.send(req)
+    data = json.loads(ygg.recv(1024*15))
+    return data
+  except:
+    return None
+
 visited = dict() # Add nodes after a successful lookup response
 rumored = dict() # Add rumors about nodes to ping
 timedout = dict()
@@ -45,8 +56,19 @@ def handleResponse(address, info, data):
     now = time.time()
     visited[str(address)] = {'box_pub_key':str(info['box_pub_key']), 'coords':str(info['coords']), 'time':now}
     if address in timedout: del timedout[address]
+    nodeinfo = getNodeInfo(str(info['box_pub_key']), str(info['coords']))
+    #print "\nDEBUG:", info, nodeinfo
     if len(visited) > 1: sys.stdout.write(",\n")
-    sys.stdout.write('"{}": ["{}", {}]'.format(address, info['coords'], int(now)))
+    nodename = None
+    try:
+      if nodeinfo and 'response' in nodeinfo and 'nodeinfo' in nodeinfo['response'] and 'name' in nodeinfo['response']['nodeinfo']:
+        nodename = '"' + str(nodeinfo['response']['nodeinfo']['name']) + '"'
+    except:
+      pass
+    if nodename:
+      sys.stdout.write('"{}": ["{}", {}, {}]'.format(address, info['coords'], int(now), nodename))
+    else:
+      sys.stdout.write('"{}": ["{}", {}]'.format(address, info['coords'], int(now)))
     sys.stdout.flush()
 # End handleResponse
 
@@ -62,8 +84,8 @@ while len(rumored) > 0:
   for k,v in rumored.iteritems():
     handleResponse(k, v, doRequest(getDHTPingRequest(v['box_pub_key'], v['coords'])))
     # These next two are imperfect workarounds to deal with old kad nodes
-    handleResponse(k, v, doRequest(getDHTPingRequest(v['box_pub_key'], v['coords'], '0'*128)))
-    handleResponse(k, v, doRequest(getDHTPingRequest(v['box_pub_key'], v['coords'], 'f'*128)))
+    #handleResponse(k, v, doRequest(getDHTPingRequest(v['box_pub_key'], v['coords'], '0'*128)))
+    #handleResponse(k, v, doRequest(getDHTPingRequest(v['box_pub_key'], v['coords'], 'f'*128)))
     break
   del rumored[k]
 print '\n}}'

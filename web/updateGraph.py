@@ -5,7 +5,8 @@ import graphPlotter
 import cgi
 
 import urllib, json
-url = "http://y.yakamo.org:3000/current"
+#url = "http://y.yakamo.org:3000/current"
+url = "current"
 
 # nodes indexed by coords
 class NodeInfo:
