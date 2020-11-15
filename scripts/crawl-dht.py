@@ -1,97 +1,164 @@
+#!/usr/bin/python3
+
+# Imports
 import json
 import socket
 import sys
 import time
+import copy
 
-#gives the option to get data from an external server instead and send that
-#if no options given it will default to localhost instead
-if len(sys.argv) == 3:
-  host_port = (sys.argv[1], int(sys.argv[2]))
-else:
-  host_port = ('localhost', 9001)
-
-def getDHTPingRequest(key, coords, target=None):
-  if target:
-    return '{{"keepalive":true, "request":"dhtPing", "box_pub_key":"{}", "coords":"{}", "target":"{}"}}'.format(key, coords, target)
-  else:
-    return '{{"keepalive":true, "request":"dhtPing", "box_pub_key":"{}", "coords":"{}"}}'.format(key, coords)
-
-def doRequest(req):
-  try:
-    ygg = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ygg.connect(host_port)
-    ygg.send(req)
-    data = json.loads(ygg.recv(1024*15))
-    return data
-  except:
-    return None
-
-def getNodeInfo(key, coords):
-  try:
-    req = '{{"keepalive":true, "request":"getNodeInfo", "box_pub_key":"{}", "coords":"{}"}}'.format(key, coords)
-    ygg = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ygg.connect(host_port)
-    ygg.send(req)
-    data = json.loads(ygg.recv(1024*15))
-    return data
-  except:
-    return None
-
-visited = dict() # Add nodes after a successful lookup response
-rumored = dict() # Add rumors about nodes to ping
+################################################################################
+# Globals
+visited = dict()
+rumored = dict()
 timedout = dict()
-def handleResponse(address, info, data):
-  global visited
-  global rumored
-  global timedout
-  timedout[str(address)] = {'box_pub_key':str(info['box_pub_key']), 'coords':str(info['coords'])}
-  if not data: return
-  if 'response' not in data: return
-  if 'nodes' not in data['response']: return
-  for addr,rumor in data['response']['nodes'].iteritems():
-    if addr in visited: continue
-    rumored[addr] = rumor
-  if address not in visited:
-    # TODO? remove this, it's debug output that happens to be in the same format as yakamo's "current" json file
-    now = time.time()
-    visited[str(address)] = {'box_pub_key':str(info['box_pub_key']), 'coords':str(info['coords']), 'time':now}
-    if address in timedout: del timedout[address]
-    nodeinfo = getNodeInfo(str(info['box_pub_key']), str(info['coords']))
-    #print "\nDEBUG:", info, nodeinfo
-    if len(visited) > 1: sys.stdout.write(",\n")
-    nodename = None
-    try:
-      if nodeinfo and 'response' in nodeinfo and 'nodeinfo' in nodeinfo['response'] and 'name' in nodeinfo['response']['nodeinfo']:
-        nodename = '"' + str(nodeinfo['response']['nodeinfo']['name']) + '"'
-    except:
-      pass
-    if nodename:
-      sys.stdout.write('"{}": ["{}", {}, {}]'.format(address, info['coords'], int(now), nodename))
+
+
+################################################################################
+# Functions
+# Generate DHT ping request string
+def getDHTPingRequest(key, coords, target=None):
+    if target:
+        return '{{"keepalive":true, "request":"dhtPing", "box_pub_key":"{}", "coords":"{}", "target":"{}"}}'.format(key, coords, target)
     else:
-      sys.stdout.write('"{}": ["{}", {}]'.format(address, info['coords'], int(now)))
-    sys.stdout.flush()
-# End handleResponse
+        return '{{"keepalive":true, "request":"dhtPing", "box_pub_key":"{}", "coords":"{}"}}'.format(key, coords)
 
-# Get self info
-selfInfo = doRequest('{"keepalive":true, "request":"getSelf"}')
 
-# Initialize dicts of visited/rumored nodes
-for k,v in selfInfo['response']['self'].iteritems(): rumored[k] = v
+################################################################################
+# Run
+def run():
+    # Handle command-line args
+    if len(sys.argv) == 3:
+        LOCAL_ADMIN = False
+        host_port = (sys.argv[1], int(sys.argv[2]))
+    elif len(sys.argv) == 1:
+        LOCAL_ADMIN = True
+        usockaddr = '/var/run/yggdrasil.sock'
+    else:
+        raise Exception("Bad command line args")
 
-# Loop over rumored nodes and ping them, adding to visited if they respond
-print '{"yggnodes": {'
-while len(rumored) > 0:
-  for k,v in rumored.iteritems():
-    handleResponse(k, v, doRequest(getDHTPingRequest(v['box_pub_key'], v['coords'])))
-    # These next two are imperfect workarounds to deal with old kad nodes
-    #handleResponse(k, v, doRequest(getDHTPingRequest(v['box_pub_key'], v['coords'], '0'*128)))
-    #handleResponse(k, v, doRequest(getDHTPingRequest(v['box_pub_key'], v['coords'], 'f'*128)))
-    break
-  del rumored[k]
-print '\n}}'
-#End
+    # Execute request on admin socket
+    def doRequest(reqstr):
+        try:
+            if LOCAL_ADMIN:
+                ygg = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                ygg.connect(usockaddr)
+            else:
+                ygg = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                ygg.connect(host_port)
+            ygg.send(str.encode(reqstr))
+            rcv = ygg.recv(1024*15)
+            data = json.loads(rcv.decode())
+            return data
+        except:
+            return None
 
-# TODO do something with the results
+    # Get node info
+    def getNodeInfo(key, coords):
+        try:
+            req = '{{"keepalive":true, "request":"getNodeInfo", "box_pub_key":"{}", "coords":"{}"}}'.format(
+                key, coords)
+            if LOCAL_ADMIN:
+                ygg = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                ygg.connect(usockaddr)
+            else:
+                ygg = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                ygg.connect(host_port)
+            ygg.send(str.encode(req))
+            rcv = ygg.recv(1024*15)
+            data = json.loads(rcv.decode())
+            return data
+        except:
+            return None
 
-#print visited
-#print timedout
+    # Get Info about first node
+    selfInfo = doRequest('{"keepalive":true, "request":"getSelf"}')
+
+    for k, v in selfInfo['response']['self'].items():
+        rumored[k] = v
+
+    # Sort response nodes into dicts
+    def handleResponse(address, info, data):
+        # Assume time-out. Otherwise this will be deleted
+        timedout[str(address)] = {'box_pub_key': str(info['box_pub_key']),
+                                  'coords': str(info['coords'])
+                                  }
+
+        # If it actually did time-out, or the response is broken/empty, return
+        if not data:
+            return
+        if 'response' not in data:
+            return
+        if 'nodes' not in data['response']:
+            return
+
+        # Identify unvisited nodes
+        for addr, rumor in data['response']['nodes'].items():
+            # Ignore already visited connected nodes
+            if addr in visited:
+                continue
+
+            rumored[addr] = rumor
+
+        # Store info from responding node if it is unvisited
+        if address not in visited:
+            now = time.time()
+            visited[str(address)] = {'box_pub_key': str(info['box_pub_key']),
+                                     'coords': str(info['coords']),
+                                     'time': now
+                                     }
+
+            # Undo time-out assumption
+            if address in timedout:
+                del timedout[address]
+
+            # Print info
+            nodeinfo = getNodeInfo(
+                str(info['box_pub_key']), str(info['coords']))
+
+            nodename = None
+            try:
+                if nodeinfo and 'response' in nodeinfo and 'nodeinfo' in nodeinfo['response'] and 'name' in nodeinfo['response']['nodeinfo']:
+                    nodename = '"' + \
+                        str(nodeinfo['response']['nodeinfo']['name']) + '"'
+            except:
+                pass
+            if nodename:
+                print('"{}": ["{}", {}, {}],'.format(
+                    address, info['coords'], int(now), nodename))
+            else:
+                print('"{}": ["{}", {}],'.format(
+                    address, info['coords'], int(now)))
+
+    print('{"yggnodes": {')
+    while len(rumored) > 0:
+        rmr = copy.copy(rumored)
+        for k, v in rmr.items():
+            handleResponse(k, v, doRequest(
+                getDHTPingRequest(v['box_pub_key'], v['coords'])))
+            # Old kad node workaround
+            handleResponse(k, v, doRequest(getDHTPingRequest(
+                v['box_pub_key'], v['coords'], '0'*128)))
+            handleResponse(k, v, doRequest(getDHTPingRequest(
+                v['box_pub_key'], v['coords'], 'f'*128)))
+
+        del rumored[k]
+    print('\n}}')
+
+    # Save visited nodes as json
+    visited_json = json.dumps(visited)
+    f = open("visited.json", "w")
+    f.write(visited_json)
+    f.close()
+
+    # Save timedout nodes as json
+    timedout_json = json.dumps(timedout)
+    f = open("timedout.json", "w")
+    f.write(timedout_json)
+    f.close()
+
+
+################################################################################
+# Main
+if __name__ == "__main__":
+    run()
